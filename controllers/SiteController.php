@@ -80,7 +80,21 @@ class SiteController extends Controller
         }
 
         $model = new LoginForm();
+
+        $session = Yii::$app->session;
+        if ($session->has('countErrorAttempts') && $session->get('countErrorAttempts') >= LoginForm::BLOCKED_ATTEMPTS_COUNT){
+            if ($session->has('lastErrorAttemptsTime') && (time() - $session->get('lastErrorAttemptsTime')) < LoginForm::BLOCKED_TIME){
+                $model->password = '';
+                return $this->render('login', [
+                    'model' => $model,
+                    'blocked' => true,
+                    'time' => LoginForm::BLOCKED_TIME - (time() - $session->get('lastErrorAttemptsTime')),
+                ]);
+            }
+        }
+
         if ($model->load(Yii::$app->request->post()) && $model->login()) {
+            $model->resetErrorAttemptsCount();
             return $this->goBack();
         }
 

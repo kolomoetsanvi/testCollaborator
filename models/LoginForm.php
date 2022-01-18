@@ -13,6 +13,9 @@ use yii\base\Model;
  */
 class LoginForm extends Model
 {
+    const BLOCKED_TIME = 60 * 5;
+    const BLOCKED_ATTEMPTS_COUNT = 3;
+
     public $username;
     public $password;
     public $rememberMe = true;
@@ -58,9 +61,9 @@ class LoginForm extends Model
     {
         if (!$this->hasErrors()) {
             $user = $this->getUser();
-
             if (!$user || !$user->validatePassword($this->password)) {
                 $this->addError($attribute, 'Неверные данные.');
+                $this->addErrorAttemptsCount();
             }
         }
     }
@@ -89,5 +92,31 @@ class LoginForm extends Model
         }
 
         return $this->_user;
+    }
+
+
+    public function addErrorAttemptsCount()
+    {
+        $session = Yii::$app->session;
+        if (!$session->isActive){
+            $session->open();
+        }
+
+        if ($session->has('countErrorAttempts')){
+            $session->set('countErrorAttempts', $session->get('countErrorAttempts') + 1);
+        } else {
+            $session->set('countErrorAttempts', 1);
+        }
+
+        $session->set('lastErrorAttemptsTime', time());
+    }
+
+    public function resetErrorAttemptsCount()
+    {
+        $session = Yii::$app->session;
+        if (!$session->isActive) {
+            $session->open();
+        }
+        $session->set('countErrorAttempts', 0);
     }
 }

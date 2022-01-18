@@ -39,4 +39,10 @@ $this->params['breadcrumbs'][] = $this->title;
         </div>
 
     <?php ActiveForm::end(); ?>
+
+    <?php if(isset($blocked)): ?>
+       <div class="offset-lg-1" style="color:red;">
+           Попробуйте еще раз через <?= isset($time) ? $time : '' ?> секунд
+       </div>
+    <?php endif; ?>
 </div>
