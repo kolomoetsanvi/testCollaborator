@@ -2,6 +2,9 @@
 
 namespace app\models;
 
+use Yii;
+use yii\helpers\Json;
+
 class User extends \yii\base\BaseObject implements \yii\web\IdentityInterface
 {
     public $id;
@@ -10,37 +13,14 @@ class User extends \yii\base\BaseObject implements \yii\web\IdentityInterface
     public $authKey;
     public $accessToken;
 
-    private static $users = [
-        '100' => [
-            'id' => '100',
-            'username' => 'admin',
-            'password' => 'admin',
-            'authKey' => 'test100key',
-            'accessToken' => '100-token',
-        ],
-        '101' => [
-            'id' => '101',
-            'username' => 'user1',
-            'password' => 'user1',
-            'authKey' => 'test101key',
-            'accessToken' => '101-token',
-        ],
-        '102' => [
-            'id' => '102',
-            'username' => 'user2',
-            'password' => 'user2',
-            'authKey' => 'test102key',
-            'accessToken' => '102-token',
-        ],
-    ];
-
-
     /**
      * {@inheritdoc}
      */
     public static function findIdentity($id)
     {
-        return isset(self::$users[$id]) ? new static(self::$users[$id]) : null;
+        $users = self::getUsers();
+
+        return isset($users[$id]) ? new static($users[$id]) : null;
     }
 
     /**
@@ -48,7 +28,9 @@ class User extends \yii\base\BaseObject implements \yii\web\IdentityInterface
      */
     public static function findIdentityByAccessToken($token, $type = null)
     {
-        foreach (self::$users as $user) {
+        $users = self::getUsers();
+
+        foreach ($users as $user) {
             if ($user['accessToken'] === $token) {
                 return new static($user);
             }
@@ -65,7 +47,9 @@ class User extends \yii\base\BaseObject implements \yii\web\IdentityInterface
      */
     public static function findByUsername($username)
     {
-        foreach (self::$users as $user) {
+        $users = self::getUsers();
+
+        foreach ($users as $user) {
             if (strcasecmp($user['username'], $username) === 0) {
                 return new static($user);
             }
@@ -106,6 +90,14 @@ class User extends \yii\base\BaseObject implements \yii\web\IdentityInterface
      */
     public function validatePassword($password)
     {
-        return $this->password === $password;
+        return Yii::$app->getSecurity()->validatePassword($password, $this->password );
+    }
+
+    /**
+     * @return mixed|null
+     */
+    private static function getUsers(){
+        $jsonfile = Yii::getAlias('@webroot/users/users.txt');
+        return Json::decode(file_get_contents($jsonfile));
     }
 }
